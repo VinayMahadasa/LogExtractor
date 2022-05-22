@@ -33,6 +33,8 @@ public class AccessingDataJpaApplication {
 
 			List<LogFile> logFileList = getLogFiles();
 
+			log.info("Converted logfile to list of Log file objects");
+
 			List<LogFile> startedLogs = logFileList.parallelStream()
 							.filter(logFile -> "STARTED".equalsIgnoreCase(logFile.getState()))
 					.sorted(Comparator.comparing(LogFile::getId))
@@ -43,9 +45,10 @@ public class AccessingDataJpaApplication {
 					.sorted(Comparator.comparing(LogFile::getId))
 					.collect(Collectors.toList());
 
+			log.info("Save list of log entity objects to h2");
 			repository.saveAll(getLogFileEntities(startedLogs, finishedLogs));
 
-			log.info("Print all stored values in h2");
+			log.info("Print all stored log entity values in h2");
 
 			for (LogFileEntity logFile : repository.findAll()) {
 				log.info(String.valueOf(logFile));
@@ -59,6 +62,7 @@ public class AccessingDataJpaApplication {
 		for (LogFile start: startedLogs) {
 			for (LogFile end: finishedLogs) {
 				if (start.getId().equalsIgnoreCase(end.getId())){
+					log.info("Found end log for event id {}", start.getId());
 					createLogEntity(logFileEntityList, start, end);
 					break;
 				}
@@ -69,6 +73,7 @@ public class AccessingDataJpaApplication {
 	}
 
 	private void createLogEntity(List<LogFileEntity> logFileEntityList, LogFile start, LogFile end) {
+		log.info("Create new entity and persist values");
 		LogFileEntity logFileEntity = new LogFileEntity();
 		logFileEntity.setEventId(start.getId());
 		logFileEntity.setEventDuration(end.getTimestamp() - start.getTimestamp());
